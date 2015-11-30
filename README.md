@@ -1,2 +1,2 @@
 # HobbyKingvarmare
-Min update version av Hobbykings värmare för sändarpåse.
+Min förbättrade version av Hobbykings värmare för sändarpåse.
