@@ -41,7 +41,7 @@
  * Värdet kommer från PID och regleras med SoftPWM
  */
 
-#define BATTERY_CELL_LOWEST_VOLTAGE  3.1  // Gräns för en cells lägsta spänningsnivå.
+#define BATTERY_CELL_LOWEST_VOLTAGE  3.3  // Gräns för en cells lägsta spänningsnivå.
 
 #include <PID_v1.h>
 #include <SoftPWM.h>
@@ -246,25 +246,29 @@ void blinkCells(uint8_t cells)
 
 void stopLoop()
 {
-  return;
   Serialprintln2("STOPP pga fel spanning");
+  TIMSK2 = 0;                               // SoftPWM avstängt. Pinnarna är normala efter detta.
+  pinMode(heaterLedPin, OUTPUT);           
+  pinMode(inputLedPin, OUTPUT);                
+  pinMode(heaterOutputPin, OUTPUT);            
+  digitalWrite(heaterOutputPin, LOW);       // Stäng av värmen.
+  
   while (1) {                               // Här är en liten oändlig loop om underspänning inträffar
     digitalWrite(inputLedPin, HIGH);        // On
     digitalWrite(heaterLedPin, HIGH);       // On
-    delay(100);
-    if (numberOfCells > 3) {
-      for (int i = 0; i < 4; i++) {
-        digitalWrite(inputLedPin, LOW);     // Off
-        digitalWrite(heaterLedPin, LOW);    // Off
-        delay(100);
-        digitalWrite(inputLedPin, HIGH);    // On
-        digitalWrite(heaterLedPin, HIGH);   // On
-        delay(100);
-      }
+    delay(200);
+    for (int i = 0; i < numberOfCells; i++) {
+      digitalWrite(inputLedPin, LOW);       // Off
+      digitalWrite(heaterLedPin, LOW);      // Off
+      delay(200);
+      digitalWrite(inputLedPin, HIGH);      // On
+      digitalWrite(heaterLedPin, HIGH);     // On
+      delay(200);
     }
     digitalWrite(inputLedPin, LOW);         // Off
     digitalWrite(heaterLedPin, LOW);        // Off
-    delay(2000);
+    digitalWrite(heaterOutputPin, LOW);     // Tål att upprepas
+    delay(3000);
   }
 }
 
