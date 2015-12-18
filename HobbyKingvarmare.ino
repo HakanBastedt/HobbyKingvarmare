@@ -39,6 +39,10 @@
  * I drift:
  * Intensitet motsvarar strömmen ut till värmetråden.
  * Värdet kommer från PID och regleras med SoftPWM
+ * 
+ * Vid underspänning:
+ * Processorn sätts i PowerDown-mode och det är i princip bara spänningsregulatorn som drar ström 10 mA.
+ * Ett blink var 8-e sekund drar lite ström, men i medel kanske den drar 15 mA?
  */
 
 #define BATTERY_CELL_LOWEST_VOLTAGE  3.3  // Gräns för en cells lägsta spänningsnivå.
@@ -46,6 +50,7 @@
 #include <PID_v1.h>
 #include <SoftPWM.h>
 #include <EEPROM.h>
+#include <LowPower.h>
 
 //Debug genom serial monitor Sätt till 1 för att få utskrift på serieporten
 #if 0
@@ -252,23 +257,27 @@ void stopLoop()
   pinMode(inputLedPin, OUTPUT);                
   pinMode(heaterOutputPin, OUTPUT);            
   digitalWrite(heaterOutputPin, LOW);       // Stäng av värmen.
+  digitalWrite(potPin,          LOW);
+  digitalWrite(heaterLedPin,    LOW);
+  digitalWrite(inputLedPin,     LOW);
   
   while (1) {                               // Här är en liten oändlig loop om underspänning inträffar
+    LowPower.powerDown(SLEEP_4S,            // Sätter processorn i Low Power mode 
+                       ADC_OFF, 
+                       BOD_OFF); 
     digitalWrite(inputLedPin, HIGH);        // On
     digitalWrite(heaterLedPin, HIGH);       // On
-    delay(200);
-    for (int i = 0; i < numberOfCells; i++) {
-      digitalWrite(inputLedPin, LOW);       // Off
-      digitalWrite(heaterLedPin, LOW);      // Off
-      delay(200);
-      digitalWrite(inputLedPin, HIGH);      // On
-      digitalWrite(heaterLedPin, HIGH);     // On
-      delay(200);
-    }
-    digitalWrite(inputLedPin, LOW);         // Off
-    digitalWrite(heaterLedPin, LOW);        // Off
-    digitalWrite(heaterOutputPin, LOW);     // Tål att upprepas
-    delay(3000);
+    delay(20);
+    digitalWrite(inputLedPin, LOW);        // Off
+    digitalWrite(heaterLedPin, LOW);       // Off
+    LowPower.powerDown(SLEEP_120MS,                 // Sätter processorn i Low Power mode 
+                       ADC_OFF, 
+                       BOD_OFF); 
+    digitalWrite(inputLedPin, HIGH);        // On
+    digitalWrite(heaterLedPin, HIGH);       // On
+    delay(20);
+    digitalWrite(inputLedPin, LOW);        // Off
+    digitalWrite(heaterLedPin, LOW);       // Off
   }
 }
 
