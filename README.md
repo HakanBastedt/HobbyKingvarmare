@@ -2,6 +2,7 @@
 Min förbättrade version av Hobbykings värmare för sändarpåse.
 
 /**
+<code>
  *
  * PID kontroll av Hobbykings Universal Heater.
  * =============================================
@@ -64,7 +65,7 @@ Min förbättrade version av Hobbykings värmare för sändarpåse.
  *    1 blink = 3.1 V
  *    2 blink = 3.2 V
  *    3 blink = 3.3 V osv
- *    När man nått den nivå man vill ha vrider man värmeratten till minimum (0-20% räknas)
+ *    När man nått den nivå man vill ha vrider man värmeratten till minimum 
  *    Då sparas detta värde och används i efterföljande användning av värmaren.
  *    Liten extra blink kvitterar att värdet lagrats.
  *    9 blink = 3.9 V
@@ -72,6 +73,6 @@ Min förbättrade version av Hobbykings värmare för sändarpåse.
  *    startar vanliga driften med PID-reglering osv.
  * 9. Om ratten vrids till < 80% under någon av punkterna utom 7 så startas
  *    direkt driften med gamla värden.
-
+</code>
  */
 
