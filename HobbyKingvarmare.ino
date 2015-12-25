@@ -79,6 +79,7 @@
 #include <SoftPWM.h>
 #include <EEPROM.h>
 #include <LowPower.h>
+#include "FastRunningMedian.h"
 
 //Debug genom serial monitor Sätt till 0 för att få utskrift på serieporten
 // Den får stå på, kansek kan vara kul för nån att titta på vad som händer
@@ -257,15 +258,14 @@ double readSetTempValue()
 
 double readTempValue()
 {
-#define nReads 10
-#define TEMP_FAKTOR (100.0*(5.0/1024.0)/(1.0*nReads))
+#define TEMP_FAKTOR (100.0*5.0/1024.0)
   // Denna faktor stämmer, spänningen genereras av LM35DZ med 10mV/grad
   // Detta behöver bara skalas om till 5V och 1024 bitars upplösning.
   // Översamplar 10 gånger
-  double val = 0;
-  for (int i = 0; i < nReads; i++)
-    val += analogRead(tempValuePin);
-  return TEMP_FAKTOR * val;
+  FastRunningMedian<uint16_t, 8, 0> readMedian;
+  for (int i=0; i<8; i++)
+    readMedian.addValue(analogRead(tempValuePin));
+  return TEMP_FAKTOR*readMedian.getMedian();
 }
 
 void blinkCells(uint8_t cells)
