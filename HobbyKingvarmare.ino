@@ -118,6 +118,10 @@ void    checkVoltage(double voltage);
 void    fadeBlink(unsigned long delta);
 void    programmeraLowestCellVolt();
 
+#define OVERSAMPLES 8
+FastRunningMedian<uint16_t, OVERSAMPLES, 0> readMedian;
+
+
 double Setpoint, Input, Output;             // Dessa tre är de viktiga för PID-regleringen
 double Kp = 5.0, Ki = 0.3, Kd = 0.0;        // Tuning-parametrar för PID. Justera om du vill
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
@@ -243,17 +247,15 @@ double readBatteryVoltage()
   return BatVoltFaktor * val;         // Returnera 0 - 16-ish Volt
 }
 
-#define nReads 10
-
 double readSetTempValue()
 {
   // Range 0-1024 på ADCn, denna är okej.
-  // Låt säga 0-60 oC. Här kan man ändra om man tycker potentiometern inte gör som man vill.
-#define POT_FAKTOR (MAX_TEMP/1024.0/(1.0*nReads))
-  double val = 0;
-  for (int i = 0; i < nReads; i++)
-    val += analogRead(setValuePin); // Läser spänningen över POT-en.
-  return POT_FAKTOR * val;
+  // Låt säga 0-60 oC. Här kan man ändra om man tycker
+  // potentiometern inte gör som man vill.
+#define POT_FAKTOR (MAX_TEMP/1024.0)
+  for (int i=0; i<OVERSAMPLES; i++)
+    readMedian.addValue(analogRead(setValuePin));
+  return POT_FAKTOR*readMedian.getMedian();
 }
 
 double readTempValue()
@@ -262,8 +264,7 @@ double readTempValue()
   // Denna faktor stämmer, spänningen genereras av LM35DZ med 10mV/grad
   // Detta behöver bara skalas om till 5V och 1024 bitars upplösning.
   // Översamplar 10 gånger
-  FastRunningMedian<uint16_t, 8, 0> readMedian;
-  for (int i=0; i<8; i++)
+  for (int i=0; i<OVERSAMPLES; i++)
     readMedian.addValue(analogRead(tempValuePin));
   return TEMP_FAKTOR*readMedian.getMedian();
 }
