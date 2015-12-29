@@ -72,7 +72,7 @@
 
  */
 
-#define DEFAULT_BATTERY_CELL_LOWEST_VOLTAGE  3  // Decimalen för gräns för en cells lägsta spänningsnivå.
+#define DEFAULT_BATTERY_CELL_LOWEST_VOLTAGE  5  // Decimalen för gräns för en cells lägsta spänningsnivå.
 // OBS att denna är bara allra första om ens det. Värde sätts via ratten och sparas/läses från EEPROM.
 // 3 + 0.1* decimalen = gräns => 3+0.3
 #include <PID_v1.h>
@@ -123,7 +123,7 @@ FastRunningMedian<uint16_t, OVERSAMPLES, 0> readMedian;
 
 
 double Setpoint, Input, Output;             // Dessa tre är de viktiga för PID-regleringen
-double Kp = 5.0, Ki = 0.3, Kd = 0.0;        // Tuning-parametrar för PID. Justera om du vill
+double Kp = 5.0, Ki = 0.02, Kd = 0.0;        // Tuning-parametrar för PID. Justera om du vill
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 #define MAX_TEMP 60     // Hur många grader som max utslag på poten betyder.
@@ -219,7 +219,7 @@ void loop()
   Serialprint(Input);
 
   if (abs(Input - Setpoint) < 5) {   // Här är en fix som rampar upp lite snabbare.
-    myPID.SetOutputLimits(0, 20);    // Minska max utslag och förstärkning närmare setpoint
+    myPID.SetOutputLimits(0, 40);    // Minska max utslag och förstärkning närmare setpoint
     myPID.SetTunings(Kp, Ki, Kd);
   } else {
     myPID.SetOutputLimits(0, 60);     // Mer utslag och mer förstärkning långt ifrån. Vi vill ha MAX fart
@@ -243,8 +243,9 @@ void loop()
 double readBatteryVoltage()
 {
   // Läs spänningen inom 0-5V range
-  double val = analogRead(batVoltagePin);
-  return BatVoltFaktor * val;         // Returnera 0 - 16-ish Volt
+    for (int i=0; i<OVERSAMPLES; i++)
+    readMedian.addValue(analogRead(batVoltagePin));
+  return BatVoltFaktor*readMedian.getMedian();
 }
 
 double readSetTempValue()
@@ -343,10 +344,7 @@ void fadeBlink(unsigned long delta)
     oldDelta = delta;
     SoftPWMSetFadeTime(inputLedPin, delta, delta);
   }
-  SoftPWMSetPercent(inputLedPin, onOff * 25); // 25 är kosmetiskt, ger en lugn blink
-  Serialprint(" ");
-  Serialprint(onOff);
-  Serialprint(" ");
+  SoftPWMSetPercent(inputLedPin, onOff * 30); // 25 är kosmetiskt, ger en lugn blink
 }
 
 #define LEDS_ON    digitalWrite(inputLedPin,HIGH);digitalWrite(heaterLedPin,HIGH);
